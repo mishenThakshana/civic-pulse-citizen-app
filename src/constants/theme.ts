@@ -1,55 +1,59 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * CivicPulse theme — mirrors the admin web panel's orange palette.
  */
-
-import '@/global.css';
 
 import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#111111',
+    textSecondary: '#6b6b6b',
+    background: '#f7f7f8',
+    backgroundElement: '#ffffff',
+    backgroundSelected: '#fff2e8',
+    border: '#e2e2e5',
+    accent: '#ea580c',
+    accentHover: '#c2410c',
+    accentLight: '#fff2e8',
+    success: '#16a34a',
+    error: '#dc2626',
+    warning: '#b45309',
+    surface: '#ffffff',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#f5f5f5',
+    textSecondary: '#a1a1aa',
+    background: '#121212',
+    backgroundElement: '#1c1c1e',
+    backgroundSelected: '#3a2412',
+    border: '#2e2e31',
+    accent: '#f97316',
+    accentHover: '#fb923c',
+    accentLight: '#3a2412',
+    success: '#22c55e',
+    error: '#f87171',
+    warning: '#fbbf24',
+    surface: '#1c1c1e',
   },
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+/**
+ * CivicPulse's brand typeface — loaded via useFonts() in the root layout.
+ * Falls back to the platform default until loaded (handled by SplashScreen).
+ */
+export const FontFamily = {
+  regular: 'PlusJakartaSans_400Regular',
+  medium: 'PlusJakartaSans_500Medium',
+  semiBold: 'PlusJakartaSans_600SemiBold',
+  bold: 'PlusJakartaSans_700Bold',
+} as const;
+
+/**
+ * Buttons and inputs are square-cornered by design — no border radius.
+ */
+export const Radius = 0;
 
 export const Spacing = {
   half: 2,
