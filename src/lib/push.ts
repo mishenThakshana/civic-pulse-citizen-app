@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { PermissionsAndroid, Platform } from 'react-native';
 
 import { registerDevice } from '@/lib/reports';
 
@@ -6,15 +6,23 @@ import { registerDevice } from '@/lib/reports';
  * Requests notification permission, reads the device's FCM token, and hands
  * it to the backend so `PushNotificationService` can reach this device.
  *
- * Wrapped end-to-end in a try/catch: until a real `google-services.json` /
- * `GoogleService-Info.plist` is dropped in and the app is rebuilt with
- * `npx expo prebuild --clean`, the native Firebase module isn't configured
- * and calling into it would throw. This makes that a silent no-op rather
- * than a crash, matching how `PushNotificationService::sendToUser` behaves
- * on the backend when Firebase isn't configured there either.
+ * Wrapped end-to-end in a try/catch so a device without Firebase properly
+ * linked (e.g. a stale Expo Go / dev client build) degrades to a silent
+ * no-op rather than a crash, matching how `PushNotificationService::sendToUser`
+ * behaves on the backend when Firebase isn't configured there either.
  */
 export async function registerForPushNotifications(): Promise<void> {
   try {
+    // `@react-native-firebase/messaging`'s `requestPermission()` only shows a
+    // prompt on iOS (it's deprecated for this exact reason). On Android 13+
+    // the OS-level notification toggle is a separate runtime permission that
+    // has to be requested explicitly, or the app never asks and every push
+    // arrives silently.
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      const status = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+      if (status !== PermissionsAndroid.RESULTS.GRANTED) return;
+    }
+
     const {
       getMessaging,
       requestPermission,
@@ -43,6 +51,6 @@ export async function registerForPushNotifications(): Promise<void> {
       registerDevice(newToken, platform).catch(() => {});
     });
   } catch {
-    // Firebase isn't configured yet — see the doc comment above.
+    // See the doc comment above — Firebase may not be linked on this build.
   }
 }

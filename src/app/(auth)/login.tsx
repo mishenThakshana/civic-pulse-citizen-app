@@ -25,6 +25,16 @@ export default function LoginScreen() {
 
   const canSubmit = email.trim().length > 0 && password.length > 0;
 
+  function handleEmailChange(value: string) {
+    setEmail(value);
+    setEmailError((prev) => (prev ? validateEmail(value) : prev));
+  }
+
+  function handlePasswordChange(value: string) {
+    setPassword(value);
+    setPasswordError((prev) => (prev ? validateRequired(value, 'Password') : prev));
+  }
+
   async function handleSubmit() {
     setError(null);
 
@@ -72,7 +82,7 @@ export default function LoginScreen() {
           <TextField
             label="Email address"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={handleEmailChange}
             placeholder="you@example.com"
             autoCapitalize="none"
             keyboardType="email-address"
@@ -82,7 +92,7 @@ export default function LoginScreen() {
           <TextField
             label="Password"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={handlePasswordChange}
             placeholder="••••••••"
             secureTextEntry
             autoComplete="password"

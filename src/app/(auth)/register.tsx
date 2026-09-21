@@ -67,6 +67,54 @@ export default function RegisterScreen() {
     password.length > 0 &&
     confirmPassword.length > 0;
 
+  function handleNameChange(value: string) {
+    setName(value);
+    setFieldErrors((prev) => (prev.name ? { ...prev, name: validateRequired(value, 'Full name') } : prev));
+  }
+
+  function handleEmailChange(value: string) {
+    setEmail(value);
+    setFieldErrors((prev) => (prev.email ? { ...prev, email: validateEmail(value) } : prev));
+  }
+
+  function handlePhoneChange(value: string) {
+    setPhone(value);
+    setFieldErrors((prev) => (prev.phone ? { ...prev, phone: validatePhone(value) } : prev));
+  }
+
+  function handleNicNumberChange(value: string) {
+    setNicNumber(value);
+    setFieldErrors((prev) => (prev.nicNumber ? { ...prev, nicNumber: validateNicNumber(value) } : prev));
+  }
+
+  function handleNicPhotoFrontChange(file: NicFile | null) {
+    setNicPhotoFront(file);
+    setFieldErrors((prev) => (prev.nicPhotoFront ? { ...prev, nicPhotoFront: null } : prev));
+  }
+
+  function handleNicPhotoBackChange(file: NicFile | null) {
+    setNicPhotoBack(file);
+    setFieldErrors((prev) => (prev.nicPhotoBack ? { ...prev, nicPhotoBack: null } : prev));
+  }
+
+  function handlePasswordChange(value: string) {
+    setPassword(value);
+    setFieldErrors((prev) => {
+      if (!prev.password && !prev.confirmPassword) return prev;
+      const next = { ...prev };
+      if (prev.password) next.password = validatePassword(value);
+      if (prev.confirmPassword) next.confirmPassword = validatePasswordConfirmation(value, confirmPassword);
+      return next;
+    });
+  }
+
+  function handleConfirmPasswordChange(value: string) {
+    setConfirmPassword(value);
+    setFieldErrors((prev) =>
+      prev.confirmPassword ? { ...prev, confirmPassword: validatePasswordConfirmation(password, value) } : prev
+    );
+  }
+
   function runClientValidation(): boolean {
     const errors: FieldErrors = {
       name: validateRequired(name, 'Full name'),
@@ -143,14 +191,14 @@ export default function RegisterScreen() {
           <TextField
             label="Full name"
             value={name}
-            onChangeText={setName}
+            onChangeText={handleNameChange}
             placeholder="Nimal Perera"
             error={fieldErrors.name}
           />
           <TextField
             label="Email address"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={handleEmailChange}
             placeholder="you@example.com"
             autoCapitalize="none"
             keyboardType="email-address"
@@ -160,7 +208,7 @@ export default function RegisterScreen() {
           <TextField
             label="Phone number"
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={handlePhoneChange}
             placeholder="07XXXXXXXX"
             keyboardType="phone-pad"
             error={fieldErrors.phone}
@@ -168,7 +216,7 @@ export default function RegisterScreen() {
           <TextField
             label="NIC number"
             value={nicNumber}
-            onChangeText={setNicNumber}
+            onChangeText={handleNicNumberChange}
             placeholder="e.g. 199012345678"
             autoCapitalize="characters"
             error={fieldErrors.nicNumber}
@@ -177,20 +225,20 @@ export default function RegisterScreen() {
           <NicPhotoPicker
             label="NIC front photo"
             value={nicPhotoFront}
-            onChange={setNicPhotoFront}
+            onChange={handleNicPhotoFrontChange}
             error={fieldErrors.nicPhotoFront}
           />
           <NicPhotoPicker
             label="NIC back photo"
             value={nicPhotoBack}
-            onChange={setNicPhotoBack}
+            onChange={handleNicPhotoBackChange}
             error={fieldErrors.nicPhotoBack}
           />
 
           <TextField
             label="Password"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={handlePasswordChange}
             placeholder="At least 8 characters"
             secureTextEntry
             error={fieldErrors.password}
@@ -198,7 +246,7 @@ export default function RegisterScreen() {
           <TextField
             label="Confirm password"
             value={confirmPassword}
-            onChangeText={setConfirmPassword}
+            onChangeText={handleConfirmPasswordChange}
             placeholder="Re-enter your password"
             secureTextEntry
             error={fieldErrors.confirmPassword}
