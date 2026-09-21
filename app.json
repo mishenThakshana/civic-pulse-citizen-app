@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "civicpulse",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#ea580c",
@@ -14,7 +14,11 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.mishenk391.app"
+      "package": "com.mishen.civicpulse",
+      "googleServicesFile": "./google-services.json"
+    },
+    "ios": {
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "web": {
       "output": "static",
@@ -39,7 +43,23 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow CivicPulse to access your photos to upload your NIC.",
-          "cameraPermission": "Allow CivicPulse to use your camera to photograph your NIC."
+          "cameraPermission": "Allow CivicPulse to use your camera to photograph your NIC and report issues."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow CivicPulse to detect your town and location when you report an issue."
+        }
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
         }
       ]
     ],

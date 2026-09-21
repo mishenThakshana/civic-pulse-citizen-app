@@ -2,6 +2,13 @@ import { tokenStorage } from '@/lib/storage';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 
+// Free ngrok domains serve an HTML "you're about to visit..." interstitial to
+// every request unless this header is present — including plain <Image>
+// fetches for report/NIC photos, not just our own JSON calls. Harmless to
+// send to a non-ngrok host (e.g. the LAN/production API), which just ignores
+// an unrecognized header.
+export const REMOTE_IMAGE_HEADERS = { 'ngrok-skip-browser-warning': 'true' };
+
 export class ApiError extends Error {
   status: number;
   errors: Record<string, string[]> | null;
@@ -32,6 +39,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    ...REMOTE_IMAGE_HEADERS,
   };
 
   const isFormData = body instanceof FormData;
@@ -82,6 +90,14 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     );
   }
 
+  if (!isJson) {
+    // A 2xx with a non-JSON body means something between the client and the
+    // API returned its own page (a tunnel's interstitial, a proxy error page,
+    // etc.) instead of forwarding to Laravel — fail loudly instead of quietly
+    // returning null and letting callers misbehave.
+    throw new ApiError(`Expected JSON from ${BASE_URL}${path} but got "${response.headers.get('content-type')}".`, response.status);
+  }
+
   return payload as T;
 }
 
@@ -89,4 +105,5 @@ export const api = {
   get: <T>(path: string, auth = true) => request<T>(path, { method: 'GET', auth }),
   post: <T>(path: string, body?: Record<string, unknown> | FormData, auth = true) =>
     request<T>(path, { method: 'POST', body, auth }),
+  delete: <T>(path: string, auth = true) => request<T>(path, { method: 'DELETE', auth }),
 };

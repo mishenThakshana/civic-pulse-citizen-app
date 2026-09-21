@@ -8,19 +8,13 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { compressImage } from '@/lib/image';
 
 export type NicFile = {
   uri: string;
   name: string;
   mimeType: string;
 };
-
-function extensionFromMime(mimeType: string): string {
-  if (mimeType === 'application/pdf') return 'pdf';
-  if (mimeType === 'image/png') return 'png';
-  if (mimeType === 'image/webp') return 'webp';
-  return 'jpg';
-}
 
 /**
  * On Android, the gallery/document pickers often hand back a `content://` URI
@@ -57,14 +51,16 @@ export function NicPhotoPicker({ label, value, onChange, error }: NicPhotoPicker
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: true });
+    // Full quality out of the camera — compressImage below owns resizing and
+    // compression in one pass, instead of double-compressing through both.
+    const result = await ImagePicker.launchCameraAsync({ quality: 1, allowsEditing: true });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      const mimeType = asset.mimeType ?? 'image/jpeg';
-      const filename = asset.fileName ?? `nic-photo.${extensionFromMime(mimeType)}`;
       try {
-        const localUri = await copyToLocalCache(asset.uri, filename);
-        onChange({ uri: localUri, name: filename, mimeType });
+        const compressed = await compressImage(asset.uri, { width: asset.width, height: asset.height });
+        const filename = 'nic-photo.jpg';
+        const localUri = await copyToLocalCache(compressed.uri, filename);
+        onChange({ uri: localUri, name: filename, mimeType: 'image/jpeg' });
       } catch {
         Alert.alert('Unable to use this photo', 'Please try taking the photo again.');
       }
@@ -79,14 +75,14 @@ export function NicPhotoPicker({ label, value, onChange, error }: NicPhotoPicker
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, allowsEditing: true });
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 1, allowsEditing: true });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      const mimeType = asset.mimeType ?? 'image/jpeg';
-      const filename = asset.fileName ?? `nic-photo.${extensionFromMime(mimeType)}`;
       try {
-        const localUri = await copyToLocalCache(asset.uri, filename);
-        onChange({ uri: localUri, name: filename, mimeType });
+        const compressed = await compressImage(asset.uri, { width: asset.width, height: asset.height });
+        const filename = 'nic-photo.jpg';
+        const localUri = await copyToLocalCache(compressed.uri, filename);
+        onChange({ uri: localUri, name: filename, mimeType: 'image/jpeg' });
       } catch {
         Alert.alert('Unable to use this photo', 'Please try selecting it again.');
       }
