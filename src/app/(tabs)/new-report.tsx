@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,6 +32,19 @@ export default function NewReportScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // GPS resolves asynchronously after mount, so the detected "street, area" only
+  // becomes available a moment later — prefill the field with it once it does,
+  // but never overwrite text the citizen has already typed themselves.
+  const addressEditedRef = useRef(false);
+  useEffect(() => {
+    if (location.address && !addressEditedRef.current) setAddress(location.address);
+  }, [location.address]);
+
+  function handleAddressChange(value: string) {
+    addressEditedRef.current = true;
+    setAddress(value);
+  }
+
   useEffect(() => {
     listCategories()
       .then(({ data }) => setCategories(data))
@@ -63,7 +76,8 @@ export default function NewReportScreen() {
 
       setPhoto(null);
       setDescription('');
-      setAddress('');
+      setAddress(location.address ?? '');
+      addressEditedRef.current = false;
       setCategoryId(null);
       Alert.alert('Report sent', 'Your report has been submitted and is now visible on the Home feed.');
       router.replace('/(tabs)');
@@ -104,7 +118,7 @@ export default function NewReportScreen() {
               <TextField
                 label={location.city ? `Where in ${location.city}?` : 'Where is it, exactly?'}
                 value={address}
-                onChangeText={setAddress}
+                onChangeText={handleAddressChange}
                 placeholder="Street, landmark, nearest junction…"
               />
             </View>

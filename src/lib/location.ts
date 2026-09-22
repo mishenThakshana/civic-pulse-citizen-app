@@ -6,6 +6,8 @@ export type Coords = { latitude: number; longitude: number };
 export type CurrentLocationResult = {
   coords: Coords;
   city: string | null;
+  /** A short, human-readable address built from the reverse-geocoded street/area — used to prefill the report's address field. */
+  address: string | null;
 };
 
 export type LocationFailureCode = 'permission-denied' | 'services-disabled' | 'timeout' | 'unknown';
@@ -37,17 +39,34 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+type ReverseGeocodeResult = { city: string | null; address: string | null };
+
 /**
- * Resolves a human-readable city/town name from coordinates using
- * OpenStreetMap's free Nominatim reverse-geocoding API — no Google Maps
- * API key or billing account required.
+ * Builds a short "street, area" string from Nominatim's address parts —
+ * concise enough to prefill the report's address field, unlike its verbose
+ * `display_name` (which also spells out postcode, district, country, etc.).
  */
-async function reverseGeocodeCity(coords: Coords): Promise<string | null> {
+function formatDetectedAddress(address: Record<string, string | undefined>): string | null {
+  const parts = [
+    address.road ?? address.pedestrian ?? address.footway,
+    address.suburb ?? address.neighbourhood ?? address.quarter,
+    address.city ?? address.town ?? address.municipality ?? address.village,
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.length > 0 ? parts.join(', ') : null;
+}
+
+/**
+ * Resolves a human-readable city/town name and a short street-level address
+ * from coordinates using OpenStreetMap's free Nominatim reverse-geocoding
+ * API — no Google Maps API key or billing account required.
+ */
+async function reverseGeocode(coords: Coords): Promise<ReverseGeocodeResult> {
   const params = new URLSearchParams({
     format: 'jsonv2',
     lat: String(coords.latitude),
     lon: String(coords.longitude),
-    zoom: '14',
+    zoom: '18',
   });
 
   const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, {
@@ -58,12 +77,15 @@ async function reverseGeocodeCity(coords: Coords): Promise<string | null> {
     },
   });
 
-  if (!response.ok) return null;
+  if (!response.ok) return { city: null, address: null };
 
   const json = await response.json();
   const address = json?.address ?? {};
 
-  return address.city ?? address.town ?? address.municipality ?? address.village ?? address.county ?? null;
+  return {
+    city: address.city ?? address.town ?? address.municipality ?? address.village ?? address.county ?? null,
+    address: formatDetectedAddress(address),
+  };
 }
 
 export async function getCurrentCityAndCoords(): Promise<CurrentLocationResult> {
@@ -89,9 +111,9 @@ export async function getCurrentCityAndCoords(): Promise<CurrentLocationResult> 
   // getCurrentPositionAsync forever — expo-location has no built-in timeout for it.
   const position = lastKnown ?? (await withTimeout(Location.getCurrentPositionAsync({}), 20000));
   const coords = { latitude: position.coords.latitude, longitude: position.coords.longitude };
-  const city = await reverseGeocodeCity(coords).catch(() => null);
+  const { city, address } = await reverseGeocode(coords).catch(() => ({ city: null, address: null }));
 
-  return { coords, city };
+  return { coords, city, address };
 }
 
 /**

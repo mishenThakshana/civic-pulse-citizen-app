@@ -7,6 +7,8 @@ export type LocationStatus = 'locating' | 'resolved' | 'permission-denied' | 'se
 type LocationContextValue = {
   status: LocationStatus;
   city: string | null;
+  /** A short, human-readable "street, area" string detected from GPS — used to prefill the report's address field. */
+  address: string | null;
   coords: Coords | null;
   /** Android only: whether the permission dialog can still be shown again. */
   canAskAgain: boolean;
@@ -31,6 +33,7 @@ const LocationContext = createContext<LocationContextValue | null>(null);
 export function LocationProvider({ children, autoStart = true }: { children: ReactNode; autoStart?: boolean }) {
   const [status, setStatus] = useState<LocationStatus>('locating');
   const [city, setCity] = useState<string | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
   const [coords, setCoords] = useState<Coords | null>(null);
   const [canAskAgain, setCanAskAgain] = useState(true);
 
@@ -45,6 +48,7 @@ export function LocationProvider({ children, autoStart = true }: { children: Rea
         if (id !== requestId.current) return;
         setCoords(result.coords);
         setCity(result.city);
+        setAddress(result.address);
         setStatus('resolved');
       })
       .catch((error: unknown) => {
@@ -77,8 +81,8 @@ export function LocationProvider({ children, autoStart = true }: { children: Rea
   }, [locate]);
 
   const value = useMemo(
-    () => ({ status, city, coords, canAskAgain, refresh, enableLocationServices }),
-    [status, city, coords, canAskAgain, refresh, enableLocationServices]
+    () => ({ status, city, address, coords, canAskAgain, refresh, enableLocationServices }),
+    [status, city, address, coords, canAskAgain, refresh, enableLocationServices]
   );
 
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>;
