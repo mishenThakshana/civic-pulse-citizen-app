@@ -58,9 +58,11 @@ export function ReportCard({ report, onPress, onVote, votePending }: ReportCardP
           {report.title}
         </Text>
         <View style={styles.badgeRow}>
-          <View style={[styles.categoryBadge, { backgroundColor: theme.background, borderColor: theme.border }]}>
-            <Text style={[styles.categoryText, { color: theme.textSecondary }]}>{report.category.name}</Text>
-          </View>
+          {report.category ? (
+            <View style={[styles.categoryBadge, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <Text style={[styles.categoryText, { color: theme.textSecondary }]}>{report.category.name}</Text>
+            </View>
+          ) : null}
           <StatusBadge status={report.status} />
         </View>
         <Text style={[styles.meta, { color: theme.textSecondary }]}>{timeAgo(report.created_at)}</Text>

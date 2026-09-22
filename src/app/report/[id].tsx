@@ -70,9 +70,11 @@ export default function ReportDetailScreen() {
         <Image source={{ uri: report.photo_url, headers: REMOTE_IMAGE_HEADERS }} style={styles.photo} contentFit="cover" />
 
         <View style={styles.badgeRow}>
-          <View style={[styles.categoryBadge, { backgroundColor: theme.background, borderColor: theme.border }]}>
-            <Text style={[styles.categoryText, { color: theme.textSecondary }]}>{report.category.name}</Text>
-          </View>
+          {report.category ? (
+            <View style={[styles.categoryBadge, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <Text style={[styles.categoryText, { color: theme.textSecondary }]}>{report.category.name}</Text>
+            </View>
+          ) : null}
           <StatusBadge status={report.status} />
         </View>
 

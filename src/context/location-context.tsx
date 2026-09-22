@@ -23,8 +23,12 @@ const LocationContext = createContext<LocationContextValue | null>(null);
  * tabs, so it survives switching screens) and shares it with every screen
  * that needs it — Home's chip and the report form read the same fix instead
  * of each re-requesting GPS on their own.
+ *
+ * `autoStart` gates the initial request: the location permission dialog and
+ * the notification permission dialog can't both be shown at once, so the
+ * caller only flips this on once the notification prompt has been answered.
  */
-export function LocationProvider({ children }: { children: ReactNode }) {
+export function LocationProvider({ children, autoStart = true }: { children: ReactNode; autoStart?: boolean }) {
   const [status, setStatus] = useState<LocationStatus>('locating');
   const [city, setCity] = useState<string | null>(null);
   const [coords, setCoords] = useState<Coords | null>(null);
@@ -57,8 +61,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    locate();
-  }, [locate]);
+    if (autoStart) locate();
+  }, [autoStart, locate]);
 
   const refresh = useCallback(() => {
     setStatus('locating');

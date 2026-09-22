@@ -39,7 +39,7 @@ export type Report = {
   id: number;
   title: string;
   description: string;
-  category: Category;
+  category: Category | null;
   department: Department | null;
   latitude: number;
   longitude: number;

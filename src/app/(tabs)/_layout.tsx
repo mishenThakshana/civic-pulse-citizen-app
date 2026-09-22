@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,8 +18,20 @@ export default function TabsLayout() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
+  // The notification and location permission dialogs can't both be shown at
+  // once, so location's own request is held back (see `LocationProvider`)
+  // until the notification prompt has been answered.
+  const [readyForLocationPrompt, setReadyForLocationPrompt] = useState(false);
+
   useEffect(() => {
-    if (user) registerForPushNotifications();
+    if (!user) return;
+    let cancelled = false;
+    registerForPushNotifications().finally(() => {
+      if (!cancelled) setReadyForLocationPrompt(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   if (isLoading) return <LoadingScreen />;
@@ -30,7 +42,7 @@ export default function TabsLayout() {
   const bottomInset = Math.max(insets.bottom, 8);
 
   return (
-    <LocationProvider>
+    <LocationProvider autoStart={readyForLocationPrompt}>
       <Tabs
         screenOptions={{
           headerShown: false,

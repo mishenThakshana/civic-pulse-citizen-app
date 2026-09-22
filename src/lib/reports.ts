@@ -10,7 +10,7 @@ export type NewReportPhoto = {
 };
 
 export type CreateReportInput = {
-  categoryId: number;
+  categoryId: number | null;
   description: string;
   latitude: number;
   longitude: number;
@@ -38,7 +38,7 @@ export function getReport(id: number): Promise<{ data: Report }> {
 
 export async function createReport(input: CreateReportInput): Promise<{ data: Report }> {
   const form = new FormData();
-  form.append('category_id', String(input.categoryId));
+  if (input.categoryId !== null) form.append('category_id', String(input.categoryId));
   form.append('description', input.description);
   form.append('latitude', String(input.latitude));
   form.append('longitude', String(input.longitude));

@@ -3,8 +3,13 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import { registerDevice } from '@/lib/reports';
 
 /**
- * Requests notification permission, reads the device's FCM token, and hands
- * it to the backend so `PushNotificationService` can reach this device.
+ * Requests notification permission, then fetches the device's FCM token and
+ * hands it to the backend so `PushNotificationService` can reach this device.
+ *
+ * Resolves as soon as the permission dialog has been answered — the token
+ * fetch and the `/devices` registration call keep running in the background
+ * afterwards, so a caller sequencing this against another permission prompt
+ * (e.g. location) only waits on the dialog itself, not on network calls.
  *
  * Wrapped end-to-end in a try/catch so a device without Firebase properly
  * linked (e.g. a stale Expo Go / dev client build) degrades to a silent
@@ -44,8 +49,11 @@ export async function registerForPushNotifications(): Promise<void> {
 
     const platform = Platform.OS === 'ios' ? 'ios' : 'android';
 
-    const token = await getToken(messaging);
-    if (token) await registerDevice(token, platform);
+    getToken(messaging)
+      .then((token) => {
+        if (token) return registerDevice(token, platform);
+      })
+      .catch(() => {});
 
     onTokenRefresh(messaging, (newToken: string) => {
       registerDevice(newToken, platform).catch(() => {});

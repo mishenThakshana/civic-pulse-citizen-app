@@ -35,10 +35,10 @@ export default function NewReportScreen() {
   }, []);
 
   const canSubmit =
-    categoryId !== null && photo !== null && description.trim().length > 0 && address.trim().length > 0 && location.coords !== null;
+    photo !== null && description.trim().length > 0 && address.trim().length > 0 && location.coords !== null;
 
   async function handleSubmit() {
-    if (!canSubmit || !photo || categoryId === null || !location.coords) return;
+    if (!canSubmit || !photo || !location.coords) return;
 
     setError(null);
     setSubmitting(true);
@@ -101,14 +101,14 @@ export default function NewReportScreen() {
             </View>
 
             <View style={styles.categorySection}>
-              <Text style={[styles.label, { color: theme.text }]}>What kind of problem is it</Text>
+              <Text style={[styles.label, { color: theme.text }]}>What kind of problem is it (optional)</Text>
               <View style={styles.chipRow}>
                 {categories.map((category) => {
                   const selected = category.id === categoryId;
                   return (
                     <Pressable
                       key={category.id}
-                      onPress={() => setCategoryId(category.id)}
+                      onPress={() => setCategoryId(selected ? null : category.id)}
                       style={[
                         styles.chip,
                         {
