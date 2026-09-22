@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -32,23 +33,25 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <AuthProvider>
-      <ThemeProvider value={DefaultTheme}>
-        <StatusBar style="dark" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            headerTintColor: theme.accent,
-            headerStyle: { backgroundColor: theme.surface },
-            headerTitleStyle: { color: theme.text, fontFamily: 'PlusJakartaSans_600SemiBold' },
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="report/[id]" options={{ headerShown: true }} />
-        </Stack>
-      </ThemeProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <ThemeProvider value={DefaultTheme}>
+          <StatusBar style="dark" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              headerTintColor: theme.accent,
+              headerStyle: { backgroundColor: theme.surface },
+              headerTitleStyle: { color: theme.text, fontFamily: 'PlusJakartaSans_600SemiBold' },
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="report/[id]" options={{ headerShown: true }} />
+          </Stack>
+        </ThemeProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

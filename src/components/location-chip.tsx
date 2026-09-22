@@ -49,12 +49,13 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     alignSelf: 'flex-start',
     gap: 4,
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
   },
-  text: { fontSize: 12, fontFamily: FontFamily.medium },
+  text: { fontSize: 12, lineHeight: 15, fontFamily: FontFamily.medium, includeFontPadding: false },
 });

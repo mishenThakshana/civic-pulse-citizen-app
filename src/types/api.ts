@@ -44,6 +44,7 @@ export type Report = {
   latitude: number;
   longitude: number;
   address: string | null;
+  contact_phone: string | null;
   photo_url: string;
   status: ReportStatus;
   votes_count: number;

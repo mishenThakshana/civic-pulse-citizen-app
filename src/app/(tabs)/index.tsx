@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LocationChip } from '@/components/location-chip';
@@ -25,22 +25,45 @@ export default function HomeScreen() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [votingId, setVotingId] = useState<number | null>(null);
 
-  const load = useCallback((withSort: Sort) => {
-    return listReports({ sort: withSort })
-      .then(({ data }) => setReports(data))
-      .catch(() => setReports([]));
+  const pageRef = useRef(1);
+  const lastPageRef = useRef(1);
+
+  const loadPage = useCallback((withSort: Sort, page: number, mode: 'replace' | 'append') => {
+    return listReports({ sort: withSort, page })
+      .then(({ data, meta }) => {
+        pageRef.current = meta.current_page;
+        lastPageRef.current = meta.last_page;
+        setReports((prev) => (mode === 'replace' ? data : [...prev, ...data]));
+      })
+      .catch(() => {
+        if (mode === 'replace') setReports([]);
+      });
   }, []);
 
-  useEffect(() => {
-    load(sort).finally(() => setLoading(false));
-  }, [sort, load]);
+  // Refetches every time the Home tab comes into focus — including right after
+  // posting a report, since new-report.tsx redirects back here.
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      loadPage(sort, 1, 'replace').finally(() => setLoading(false));
+    }, [sort, loadPage])
+  );
 
   async function handleRefresh() {
     setRefreshing(true);
-    await load(sort);
+    await loadPage(sort, 1, 'replace');
     setRefreshing(false);
+  }
+
+  async function handleLoadMore() {
+    if (loadingMore || loading || refreshing) return;
+    if (pageRef.current >= lastPageRef.current) return;
+    setLoadingMore(true);
+    await loadPage(sort, pageRef.current + 1, 'append');
+    setLoadingMore(false);
   }
 
   async function handleVote(report: Report) {
@@ -92,6 +115,8 @@ export default function HomeScreen() {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.accent} />}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
         renderItem={({ item }) => (
           <ReportCard
             report={item}
@@ -101,6 +126,7 @@ export default function HomeScreen() {
           />
         )}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.two }} />}
+        ListFooterComponent={loadingMore ? <ActivityIndicator color={theme.accent} style={styles.footerLoader} /> : null}
         ListEmptyComponent={
           !loading ? (
             <Text style={[styles.empty, { color: theme.textSecondary }]}>
@@ -124,5 +150,6 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 13 },
   tabIndicator: { height: 2, borderRadius: 1, marginTop: 6 },
   list: { paddingHorizontal: Spacing.four, paddingBottom: Spacing.six },
+  footerLoader: { marginVertical: Spacing.three },
   empty: { fontSize: 13, fontFamily: FontFamily.regular, textAlign: 'center', marginTop: Spacing.six },
 });

@@ -28,7 +28,9 @@ export function StatusBadge({ status }: { status: ReportStatus }) {
 
   return (
     <View style={[styles.badge, { borderColor: color }]}>
-      <Text style={[styles.badgeText, { color }]}>{statusLabel(status)}</Text>
+      <Text style={[styles.badgeText, { color }]} numberOfLines={1}>
+        {statusLabel(status)}
+      </Text>
     </View>
   );
 }
@@ -103,10 +105,17 @@ const styles = StyleSheet.create({
   body: { flex: 1, gap: 4 },
   title: { fontSize: 14, fontFamily: FontFamily.semiBold, lineHeight: 18 },
   badgeRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
-  categoryBadge: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
-  categoryText: { fontSize: 10, fontFamily: FontFamily.medium },
-  badge: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
-  badgeText: { fontSize: 10, fontFamily: FontFamily.medium },
+  categoryBadge: {
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryText: { fontSize: 10, lineHeight: 13, fontFamily: FontFamily.medium, includeFontPadding: false },
+  badge: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontSize: 10, lineHeight: 13, fontFamily: FontFamily.medium, includeFontPadding: false },
   meta: { fontSize: 11, fontFamily: FontFamily.regular },
   votePill: {
     borderWidth: 1,
@@ -117,5 +126,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     minWidth: 48,
   },
-  voteCount: { fontSize: 13, fontFamily: FontFamily.semiBold, marginTop: 2 },
+  voteCount: { fontSize: 13, lineHeight: 16, fontFamily: FontFamily.semiBold, includeFontPadding: false, marginTop: 2 },
 });

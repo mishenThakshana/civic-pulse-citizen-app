@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ReportCard } from '@/components/report-card';
@@ -27,21 +27,42 @@ export default function ReportsScreen() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const load = useCallback((withFilter: Filter) => {
-    return myReports(withFilter === 'all' ? {} : { status: withFilter })
-      .then(({ data }) => setReports(data))
-      .catch(() => setReports([]));
+  const pageRef = useRef(1);
+  const lastPageRef = useRef(1);
+
+  const loadPage = useCallback((withFilter: Filter, page: number, mode: 'replace' | 'append') => {
+    return myReports({ ...(withFilter === 'all' ? {} : { status: withFilter }), page })
+      .then(({ data, meta }) => {
+        pageRef.current = meta.current_page;
+        lastPageRef.current = meta.last_page;
+        setReports((prev) => (mode === 'replace' ? data : [...prev, ...data]));
+      })
+      .catch(() => {
+        if (mode === 'replace') setReports([]);
+      });
   }, []);
 
-  useEffect(() => {
-    load(filter).finally(() => setLoading(false));
-  }, [filter, load]);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      loadPage(filter, 1, 'replace').finally(() => setLoading(false));
+    }, [filter, loadPage])
+  );
 
   async function handleRefresh() {
     setRefreshing(true);
-    await load(filter);
+    await loadPage(filter, 1, 'replace');
     setRefreshing(false);
+  }
+
+  async function handleLoadMore() {
+    if (loadingMore || loading || refreshing) return;
+    if (pageRef.current >= lastPageRef.current) return;
+    setLoadingMore(true);
+    await loadPage(filter, pageRef.current + 1, 'append');
+    setLoadingMore(false);
   }
 
   return (
@@ -75,8 +96,11 @@ export default function ReportsScreen() {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.accent} />}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
         renderItem={({ item }) => <ReportCard report={item} onPress={() => router.push(`/report/${item.id}`)} />}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.two }} />}
+        ListFooterComponent={loadingMore ? <ActivityIndicator color={theme.accent} style={styles.footerLoader} /> : null}
         ListEmptyComponent={
           !loading ? (
             <Text style={[styles.empty, { color: theme.textSecondary }]}>You haven&apos;t reported anything yet.</Text>
@@ -97,5 +121,6 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 13 },
   tabIndicator: { height: 2, borderRadius: 1, marginTop: 6 },
   list: { paddingHorizontal: Spacing.four, paddingBottom: Spacing.six },
+  footerLoader: { marginVertical: Spacing.three },
   empty: { fontSize: 13, fontFamily: FontFamily.regular, textAlign: 'center', marginTop: Spacing.six },
 });

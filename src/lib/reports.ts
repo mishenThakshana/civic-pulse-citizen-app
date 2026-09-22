@@ -15,6 +15,7 @@ export type CreateReportInput = {
   latitude: number;
   longitude: number;
   address: string;
+  contactPhone: string;
   photo: NewReportPhoto;
 };
 
@@ -22,13 +23,15 @@ export function listCategories(): Promise<{ data: Category[] }> {
   return api.get('/categories');
 }
 
-export function listReports(params: { status?: string; sort?: 'newest' | 'most_voted' } = {}): Promise<Paginated<Report>> {
-  const query = new URLSearchParams(params as Record<string, string>).toString();
+export function listReports(
+  params: { status?: string; sort?: 'newest' | 'most_voted'; page?: number } = {}
+): Promise<Paginated<Report>> {
+  const query = new URLSearchParams(params as unknown as Record<string, string>).toString();
   return api.get(`/reports${query ? `?${query}` : ''}`);
 }
 
-export function myReports(params: { status?: string } = {}): Promise<Paginated<Report>> {
-  const query = new URLSearchParams(params as Record<string, string>).toString();
+export function myReports(params: { status?: string; page?: number } = {}): Promise<Paginated<Report>> {
+  const query = new URLSearchParams(params as unknown as Record<string, string>).toString();
   return api.get(`/reports/mine${query ? `?${query}` : ''}`);
 }
 
@@ -43,6 +46,7 @@ export async function createReport(input: CreateReportInput): Promise<{ data: Re
   form.append('latitude', String(input.latitude));
   form.append('longitude', String(input.longitude));
   form.append('address', input.address);
+  form.append('contact_phone', input.contactPhone);
   form.append('photo', new File(input.photo.uri) as unknown as Blob, input.photo.name);
 
   return api.post('/reports', form);

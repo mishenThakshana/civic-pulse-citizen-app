@@ -4,6 +4,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 
+import { ImageViewerModal } from '@/components/image-viewer-modal';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { StatusBadge } from '@/components/report-card';
 import { ThemedView } from '@/components/themed-view';
@@ -28,6 +29,7 @@ export default function ReportDetailScreen() {
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
+  const [viewerUri, setViewerUri] = useState<string | null>(null);
 
   const load = useCallback(() => {
     return getReport(Number(id))
@@ -67,7 +69,9 @@ export default function ReportDetailScreen() {
       <Stack.Screen options={{ headerShown: true, title: `Report #${report.id}` }} />
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Image source={{ uri: report.photo_url, headers: REMOTE_IMAGE_HEADERS }} style={styles.photo} contentFit="cover" />
+        <Pressable onPress={() => setViewerUri(report.photo_url)}>
+          <Image source={{ uri: report.photo_url, headers: REMOTE_IMAGE_HEADERS }} style={styles.photo} contentFit="cover" />
+        </Pressable>
 
         <View style={styles.badgeRow}>
           {report.category ? (
@@ -128,7 +132,9 @@ export default function ReportDetailScreen() {
                 </View>
                 {entry.note ? <Text style={[styles.timelineNote, { color: theme.textSecondary }]}>{entry.note}</Text> : null}
                 {entry.photo_url ? (
-                  <Image source={{ uri: entry.photo_url, headers: REMOTE_IMAGE_HEADERS }} style={styles.timelinePhoto} contentFit="cover" />
+                  <Pressable onPress={() => setViewerUri(entry.photo_url)}>
+                    <Image source={{ uri: entry.photo_url, headers: REMOTE_IMAGE_HEADERS }} style={styles.timelinePhoto} contentFit="cover" />
+                  </Pressable>
                 ) : null}
                 <Text style={[styles.timelineDate, { color: theme.textSecondary }]}>
                   {new Date(entry.created_at).toLocaleString()}
@@ -138,6 +144,8 @@ export default function ReportDetailScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <ImageViewerModal visible={viewerUri !== null} uri={viewerUri} onClose={() => setViewerUri(null)} />
     </ThemedView>
   );
 }
@@ -148,8 +156,15 @@ const styles = StyleSheet.create({
   content: { padding: Spacing.four, gap: Spacing.two, paddingBottom: Spacing.six },
   photo: { width: '100%', height: 220, borderRadius: Radius },
   badgeRow: { flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' },
-  categoryBadge: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
-  categoryText: { fontSize: 10, fontFamily: FontFamily.medium },
+  categoryBadge: {
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryText: { fontSize: 10, lineHeight: 13, fontFamily: FontFamily.medium, includeFontPadding: false },
   title: { fontSize: 18, fontFamily: FontFamily.bold, marginTop: 4 },
   addressRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   addressText: { fontSize: 12, fontFamily: FontFamily.regular },

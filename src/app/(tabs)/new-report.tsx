@@ -11,7 +11,7 @@ import { ReportPhotoPicker, type ReportPhoto } from '@/components/report-photo-p
 import { FontFamily, Spacing } from '@/constants/theme';
 import { useCurrentLocation } from '@/context/location-context';
 import { useTheme } from '@/hooks/use-theme';
-import { ApiError } from '@/context/auth-context';
+import { ApiError, useAuth } from '@/context/auth-context';
 import { createReport, listCategories } from '@/lib/reports';
 import type { Category } from '@/types/api';
 
@@ -19,12 +19,16 @@ export default function NewReportScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const location = useCurrentLocation();
+  const { user } = useAuth();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [photo, setPhoto] = useState<ReportPhoto | null>(null);
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
+  // Prefilled with the citizen's account phone — they can still edit it in case
+  // they want the government to reach them on a different number for this report.
+  const [contactPhone, setContactPhone] = useState(() => user?.phone ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +39,11 @@ export default function NewReportScreen() {
   }, []);
 
   const canSubmit =
-    photo !== null && description.trim().length > 0 && address.trim().length > 0 && location.coords !== null;
+    photo !== null &&
+    description.trim().length > 0 &&
+    address.trim().length > 0 &&
+    contactPhone.trim().length > 0 &&
+    location.coords !== null;
 
   async function handleSubmit() {
     if (!canSubmit || !photo || !location.coords) return;
@@ -49,6 +57,7 @@ export default function NewReportScreen() {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
         address: address.trim(),
+        contactPhone: contactPhone.trim(),
         photo,
       });
 
@@ -134,6 +143,17 @@ export default function NewReportScreen() {
               style={styles.descriptionInput}
             />
 
+            <TextField
+              label="Contact phone"
+              value={contactPhone}
+              onChangeText={setContactPhone}
+              placeholder="07XXXXXXXX"
+              keyboardType="phone-pad"
+            />
+            <Text style={[styles.hint, { color: theme.textSecondary }]}>
+              The government may need to call you about this report.
+            </Text>
+
             <Button
               title="Send report"
               onPress={handleSubmit}
@@ -214,8 +234,9 @@ const styles = StyleSheet.create({
   gateButton: { alignSelf: 'stretch', marginTop: Spacing.two },
   categorySection: {},
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
-  chipText: { fontSize: 13, fontFamily: FontFamily.medium },
+  chip: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 9, alignItems: 'center', justifyContent: 'center' },
+  chipText: { fontSize: 13, lineHeight: 16, fontFamily: FontFamily.medium, includeFontPadding: false },
   descriptionInput: { minHeight: 90, textAlignVertical: 'top', paddingTop: 12 },
+  hint: { fontSize: 12, fontFamily: FontFamily.regular, marginTop: -Spacing.two },
   submit: { marginTop: Spacing.two },
 });
