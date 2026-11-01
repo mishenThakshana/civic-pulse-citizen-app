@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
+import { AiScanModal, type AiScanPhase } from '@/components/ai-scan-modal';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { LocationChip } from '@/components/location-chip';
@@ -31,6 +32,7 @@ export default function NewReportScreen() {
   const [contactPhone, setContactPhone] = useState(() => user?.phone ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scan, setScan] = useState<{ phase: AiScanPhase; message: string | null } | null>(null);
 
   // GPS resolves asynchronously after mount, so the detected "street, area" only
   // becomes available a moment later — prefill the field with it once it does,
@@ -63,6 +65,7 @@ export default function NewReportScreen() {
 
     setError(null);
     setSubmitting(true);
+    setScan({ phase: 'scanning', message: null });
     try {
       await createReport({
         categoryId,
@@ -74,15 +77,25 @@ export default function NewReportScreen() {
         photo,
       });
 
+      setScan({ phase: 'approved', message: null });
+      await new Promise((resolve) => setTimeout(resolve, 1600));
+      setScan(null);
+
       setPhoto(null);
       setDescription('');
       setAddress(location.address ?? '');
       addressEditedRef.current = false;
       setCategoryId(null);
-      Alert.alert('Report sent', 'Your report has been submitted and is now visible on the Home feed.');
       router.replace('/(tabs)');
     } catch (e) {
-      setError(e instanceof ApiError ? e.firstError() : 'Unable to submit your report. Please try again.');
+      // The backend runs the AI screening before saving anything and reports a
+      // rejection (spam, or screening unavailable) under the "screening" key.
+      if (e instanceof ApiError && e.errors?.screening) {
+        setScan({ phase: 'rejected', message: e.firstError() });
+      } else {
+        setScan(null);
+        setError(e instanceof ApiError ? e.firstError() : 'Unable to submit your report. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -180,6 +193,14 @@ export default function NewReportScreen() {
           <LocationGate location={location} />
         )}
       </ScrollView>
+
+      <AiScanModal
+        visible={scan !== null}
+        phase={scan?.phase ?? 'scanning'}
+        photoUri={photo?.uri ?? null}
+        message={scan?.message}
+        onDismiss={() => setScan(null)}
+      />
     </KeyboardAvoidingView>
   );
 }
