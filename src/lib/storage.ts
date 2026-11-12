@@ -36,3 +36,4 @@ function createStringStorage(key: string) {
 
 export const tokenStorage = createStringStorage(TOKEN_KEY);
 export const userStorage = createStringStorage(USER_KEY);
+export const languageStorage = createStringStorage('civicpulse_language');

@@ -6,9 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/button';
 import { FontFamily, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-
-const FALLBACK_MESSAGE =
-  'Your account has been submitted for review. You will be able to sign in once an administrator approves your NIC.';
+import { useLanguage } from '@/context/language-context';
 
 /**
  * Shown straight after a successful registration. The citizen has no session
@@ -18,6 +16,7 @@ export default function PendingApprovalScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { message } = useLocalSearchParams<{ message?: string }>();
+  const { t } = useLanguage();
 
   return (
     <ScrollView
@@ -28,18 +27,17 @@ export default function PendingApprovalScreen() {
         <Ionicons name="time-outline" size={34} color={theme.accent} />
       </View>
 
-      <Text style={[styles.title, { color: theme.text }]}>Pending approval</Text>
-      <Text style={[styles.body, { color: theme.textSecondary }]}>{message || FALLBACK_MESSAGE}</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('pending.title')}</Text>
+      <Text style={[styles.body, { color: theme.textSecondary }]}>{message || t('pending.message')}</Text>
 
       <View style={[styles.note, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <Ionicons name="information-circle-outline" size={18} color={theme.accent} />
         <Text style={[styles.noteText, { color: theme.textSecondary }]}>
-          Reviews are done manually, so this can take a little while. Try signing in again later — if
-          your registration is turned down, the reason is shown on the sign-in screen.
+          {t('pending.note')}
         </Text>
       </View>
 
-      <Button title="Back to sign in" onPress={() => router.replace('/(auth)/login')} style={styles.action} />
+      <Button title={t('pending.back')} onPress={() => router.replace('/(auth)/login')} style={styles.action} />
     </ScrollView>
   );
 }

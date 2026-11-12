@@ -1,6 +1,9 @@
 import { PermissionsAndroid, Platform } from 'react-native';
 
+import { onLanguageChange } from '@/context/language-context';
 import { registerDevice } from '@/lib/reports';
+
+let unsubscribeLanguage: (() => void) | null = null;
 
 /**
  * Requests notification permission, then fetches the device's FCM token and
@@ -51,7 +54,14 @@ export async function registerForPushNotifications(): Promise<void> {
 
     getToken(messaging)
       .then((token) => {
-        if (token) return registerDevice(token, platform);
+        if (!token) return;
+        // Re-register when the citizen switches language, so the backend sends
+        // this device's push notifications in the newly chosen language.
+        unsubscribeLanguage?.();
+        unsubscribeLanguage = onLanguageChange(() => {
+          registerDevice(token, platform).catch(() => {});
+        });
+        return registerDevice(token, platform);
       })
       .catch(() => {});
 

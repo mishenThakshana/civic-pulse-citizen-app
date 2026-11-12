@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { FontFamily } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
 import type { LocationStatus } from '@/context/location-context';
 
 type LocationChipProps = {
@@ -13,17 +14,18 @@ type LocationChipProps = {
 
 export function LocationChip({ status, city, onPress }: LocationChipProps) {
   const theme = useTheme();
+  const { t } = useLanguage();
 
   const label =
     status === 'locating'
-      ? 'Locating…'
+      ? t('locationChip.locating')
       : status === 'resolved'
-        ? (city ?? 'Unknown area')
+        ? (city ?? t('locationChip.unknownArea'))
         : status === 'permission-denied'
-          ? 'Location permission needed'
+          ? t('locationChip.permission')
           : status === 'services-disabled'
-            ? 'GPS is off — tap to enable'
-            : 'Couldn’t locate — tap to retry';
+            ? t('locationChip.gpsOff')
+            : t('locationChip.error');
 
   const isProblem = status === 'permission-denied' || status === 'services-disabled' || status === 'error';
   const iconName = isProblem ? 'location-outline' : 'location-sharp';

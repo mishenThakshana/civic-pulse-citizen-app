@@ -10,6 +10,8 @@ import { StatusBadge } from '@/components/report-card';
 import { ThemedView } from '@/components/themed-view';
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
+import { categoryName } from '@/lib/format';
 import { REMOTE_IMAGE_HEADERS } from '@/lib/api';
 import { getReport, removeUpvote, upvote } from '@/lib/reports';
 import type { Report } from '@/types/api';
@@ -25,6 +27,7 @@ function openInMaps(latitude: number, longitude: number) {
 export default function ReportDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
+  const { t, language, dateLocale } = useLanguage();
 
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +38,9 @@ export default function ReportDetailScreen() {
     return getReport(Number(id))
       .then(({ data }) => setReport(data))
       .catch(() => setReport(null));
-  }, [id]);
+    // Reload on a language change so the system notes come back translated.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, language]);
 
   useEffect(() => {
     load().finally(() => setLoading(false));
@@ -59,14 +64,14 @@ export default function ReportDetailScreen() {
   if (!report) {
     return (
       <ThemedView style={styles.centered}>
-        <Text style={{ color: theme.textSecondary, fontFamily: FontFamily.regular }}>This report could not be found.</Text>
+        <Text style={{ color: theme.textSecondary, fontFamily: FontFamily.regular }}>{t('detail.notFound')}</Text>
       </ThemedView>
     );
   }
 
   return (
     <ThemedView style={styles.flex}>
-      <Stack.Screen options={{ headerShown: true, title: `Report #${report.id}` }} />
+      <Stack.Screen options={{ headerShown: true, title: t('detail.title', { id: report.id }) }} />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Pressable onPress={() => setViewerUri(report.photo_url)}>
@@ -76,7 +81,7 @@ export default function ReportDetailScreen() {
         <View style={styles.badgeRow}>
           {report.category ? (
             <View style={[styles.categoryBadge, { backgroundColor: theme.background, borderColor: theme.border }]}>
-              <Text style={[styles.categoryText, { color: theme.textSecondary }]}>{report.category.name}</Text>
+              <Text style={[styles.categoryText, { color: theme.textSecondary }]}>{categoryName(report.category, t)}</Text>
             </View>
           ) : null}
           <StatusBadge status={report.status} />
@@ -105,17 +110,17 @@ export default function ReportDetailScreen() {
           >
             <Ionicons name="chevron-up" size={16} color={report.voted_by_me ? theme.accent : theme.textSecondary} />
             <Text style={[styles.voteCount, { color: report.voted_by_me ? theme.accent : theme.text }]}>
-              {report.votes_count} citizens said this affects them
+              {t('detail.affected', { count: report.votes_count })}
             </Text>
           </Pressable>
         </View>
 
         <Pressable onPress={() => openInMaps(report.latitude, report.longitude)} style={styles.mapLink}>
           <Ionicons name="location-outline" size={16} color={theme.accent} />
-          <Text style={[styles.mapLinkText, { color: theme.accent }]}>Open location in Maps</Text>
+          <Text style={[styles.mapLinkText, { color: theme.accent }]}>{t('detail.openMaps')}</Text>
         </Pressable>
 
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Progress</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('detail.progress')}</Text>
         <View style={styles.timeline}>
           {report.status_history.map((entry, index) => (
             <View key={entry.id} style={styles.timelineItem}>
@@ -137,7 +142,7 @@ export default function ReportDetailScreen() {
                   </Pressable>
                 ) : null}
                 <Text style={[styles.timelineDate, { color: theme.textSecondary }]}>
-                  {new Date(entry.created_at).toLocaleString()}
+                  {new Date(entry.created_at).toLocaleString(dateLocale)}
                 </Text>
               </View>
             </View>

@@ -9,6 +9,15 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api/v
 // an unrecognized header.
 export const REMOTE_IMAGE_HEADERS = { 'ngrok-skip-browser-warning': 'true' };
 
+// The language the citizen picked in the app, sent with every request so the
+// API returns its messages (sign-in refusals, screening results, alerts) in
+// the same language as the interface.
+let currentLanguage = 'en';
+
+export function setApiLanguage(language: string): void {
+  currentLanguage = language;
+}
+
 export class ApiError extends Error {
   status: number;
   errors: Record<string, string[]> | null;
@@ -39,6 +48,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    'Accept-Language': currentLanguage,
     ...REMOTE_IMAGE_HEADERS,
   };
 

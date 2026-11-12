@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
 import { compressImage } from '@/lib/image';
 
 export type NicFile = {
@@ -40,6 +41,7 @@ type NicPhotoPickerProps = {
 
 export function NicPhotoPicker({ label, value, onChange, error }: NicPhotoPickerProps) {
   const theme = useTheme();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -47,7 +49,7 @@ export function NicPhotoPicker({ label, value, onChange, error }: NicPhotoPicker
     setSheetOpen(false);
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Camera access needed', 'CivicPulse needs camera access to photograph your NIC.');
+      Alert.alert(t('nicPicker.cameraNeededTitle'), t('nicPicker.cameraNeededBody'));
       return;
     }
 
@@ -62,7 +64,7 @@ export function NicPhotoPicker({ label, value, onChange, error }: NicPhotoPicker
         const localUri = await copyToLocalCache(compressed.uri, filename);
         onChange({ uri: localUri, name: filename, mimeType: 'image/jpeg' });
       } catch {
-        Alert.alert('Unable to use this photo', 'Please try taking the photo again.');
+        Alert.alert(t('nicPicker.unusablePhotoTitle'), t('nicPicker.unusablePhotoBody'));
       }
     }
   }
@@ -71,7 +73,7 @@ export function NicPhotoPicker({ label, value, onChange, error }: NicPhotoPicker
     setSheetOpen(false);
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Photo access needed', 'CivicPulse needs access to your photos to upload your NIC.');
+      Alert.alert(t('nicPicker.photosNeededTitle'), t('nicPicker.photosNeededBody'));
       return;
     }
 
@@ -84,7 +86,7 @@ export function NicPhotoPicker({ label, value, onChange, error }: NicPhotoPicker
         const localUri = await copyToLocalCache(compressed.uri, filename);
         onChange({ uri: localUri, name: filename, mimeType: 'image/jpeg' });
       } catch {
-        Alert.alert('Unable to use this photo', 'Please try selecting it again.');
+        Alert.alert(t('nicPicker.unusablePhotoTitle'), t('nicPicker.unusablePhotoBody'));
       }
     }
   }
@@ -102,7 +104,7 @@ export function NicPhotoPicker({ label, value, onChange, error }: NicPhotoPicker
         const localUri = await copyToLocalCache(asset.uri, asset.name);
         onChange({ uri: localUri, name: asset.name, mimeType });
       } catch {
-        Alert.alert('Unable to use this document', 'Please try selecting it again.');
+        Alert.alert(t('nicPicker.unusableDocumentTitle'), t('nicPicker.unusableDocumentBody'));
       }
     }
   }
@@ -152,16 +154,16 @@ export function NicPhotoPicker({ label, value, onChange, error }: NicPhotoPicker
           >
             <Text style={[styles.sheetTitle, { color: theme.text }]}>{label}</Text>
 
-            <SheetOption icon="camera-outline" text="Take Photo" onPress={handleTakePhoto} color={theme.accent} />
+            <SheetOption icon="camera-outline" text={t('nicPicker.takePhoto')} onPress={handleTakePhoto} color={theme.accent} />
             <SheetOption
               icon="images-outline"
-              text="Choose from Library"
+              text={t('nicPicker.chooseFromGallery')}
               onPress={handleChooseFromLibrary}
               color={theme.accent}
             />
             <SheetOption
               icon="document-text-outline"
-              text="Upload Document"
+              text={t('nicPicker.uploadDocument')}
               onPress={handleUploadDocument}
               color={theme.accent}
             />
@@ -170,7 +172,7 @@ export function NicPhotoPicker({ label, value, onChange, error }: NicPhotoPicker
               onPress={() => setSheetOpen(false)}
               style={[styles.cancelButton, { borderColor: theme.border }]}
             >
-              <Text style={[styles.cancelText, { color: theme.text }]}>Cancel</Text>
+              <Text style={[styles.cancelText, { color: theme.text }]}>{t('common.cancel')}</Text>
             </Pressable>
           </Pressable>
         </Pressable>

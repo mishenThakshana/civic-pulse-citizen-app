@@ -2,16 +2,19 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { Button } from '@/components/ui/button';
 import { ThemedView } from '@/components/themed-view';
 import { FontFamily, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
 
 export default function ProfileScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
 
   return (
     <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.five }]}>
@@ -22,7 +25,7 @@ export default function ProfileScreen() {
       <Text style={[styles.name, { color: theme.text }]}>{user?.name}</Text>
       <View style={[styles.statusBadge, { backgroundColor: theme.accentLight }]}>
         <Text style={[styles.statusText, { color: theme.accent }]}>
-          {user?.approval_status === 'approved' ? 'Verified account' : user?.approval_status}
+          {user?.approval_status === 'approved' ? t('profile.verified') : user?.approval_status}
         </Text>
       </View>
 
@@ -39,7 +42,11 @@ export default function ProfileScreen() {
         ) : null}
       </View>
 
-      <Button title="Sign out" variant="ghost" onPress={logout} style={styles.signOut} />
+      <View style={styles.language}>
+        <LanguageSwitcher showLabel />
+      </View>
+
+      <Button title={t('profile.signOut')} variant="ghost" onPress={logout} style={styles.signOut} />
     </ThemedView>
   );
 }
@@ -54,5 +61,6 @@ const styles = StyleSheet.create({
   card: { width: '100%', borderWidth: 1, borderRadius: 12, padding: Spacing.three, gap: Spacing.two },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rowText: { fontSize: 14, fontFamily: FontFamily.regular },
-  signOut: { width: '100%', marginTop: Spacing.five },
+  language: { marginTop: Spacing.four },
+  signOut: { width: '100%', marginTop: Spacing.four },
 });

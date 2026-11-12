@@ -7,22 +7,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '@/components/themed-view';
 import { FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
+import { timeAgo } from '@/lib/format';
 import { listNotifications } from '@/lib/reports';
 import type { NotificationItem } from '@/types/api';
-
-function timeAgo(iso: string): string {
-  const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
 
 export default function NotificationsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { t, language } = useLanguage();
 
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +25,8 @@ export default function NotificationsScreen() {
 
   useEffect(() => {
     load().finally(() => setLoading(false));
-  }, [load]);
+    // Alerts are rendered by the API in the chosen language, so refetch on change.
+  }, [load, language]);
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -43,9 +37,9 @@ export default function NotificationsScreen() {
   return (
     <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.three }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>Alerts</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('alerts.title')}</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Updates from departments handling the issues you reported.
+          {t('alerts.subtitle')}
         </Text>
       </View>
 
@@ -65,7 +59,7 @@ export default function NotificationsScreen() {
             <View style={styles.body}>
               <Text style={[styles.cardTitle, { color: theme.text }]}>{item.title}</Text>
               <Text style={[styles.cardBody, { color: theme.textSecondary }]}>{item.body}</Text>
-              <Text style={[styles.meta, { color: theme.textSecondary }]}>{timeAgo(item.created_at)}</Text>
+              <Text style={[styles.meta, { color: theme.textSecondary }]}>{timeAgo(item.created_at, t)}</Text>
             </View>
           </Pressable>
         )}
@@ -73,7 +67,7 @@ export default function NotificationsScreen() {
         ListEmptyComponent={
           !loading ? (
             <Text style={[styles.empty, { color: theme.textSecondary }]}>
-              No alerts yet. You&apos;ll see updates here when a report you follow changes.
+              {t('alerts.empty')}
             </Text>
           ) : null
         }

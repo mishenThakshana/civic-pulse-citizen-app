@@ -7,21 +7,23 @@ import { ReportCard } from '@/components/report-card';
 import { ThemedView } from '@/components/themed-view';
 import { FontFamily, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
 import { myReports } from '@/lib/reports';
 import type { Report, ReportStatus } from '@/types/api';
 
 type Filter = 'all' | ReportStatus;
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'open', label: 'Open' },
-  { key: 'in_progress', label: 'In Progress' },
-  { key: 'resolved', label: 'Resolved' },
+const FILTERS: { key: Filter; labelKey: string }[] = [
+  { key: 'all', labelKey: 'myReports.all' },
+  { key: 'open', labelKey: 'status.open' },
+  { key: 'in_progress', labelKey: 'status.in_progress' },
+  { key: 'resolved', labelKey: 'status.resolved' },
 ];
 
 export default function ReportsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { t, language } = useLanguage();
 
   const [filter, setFilter] = useState<Filter>('all');
   const [reports, setReports] = useState<Report[]>([]);
@@ -48,7 +50,8 @@ export default function ReportsScreen() {
     useCallback(() => {
       setLoading(true);
       loadPage(filter, 1, 'replace').finally(() => setLoading(false));
-    }, [filter, loadPage])
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filter, loadPage, language])
   );
 
   async function handleRefresh() {
@@ -68,12 +71,12 @@ export default function ReportsScreen() {
   return (
     <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.three }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>My Reports</Text>
-        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Everything you have sent and where it stands.</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('myReports.title')}</Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{t('myReports.subtitle')}</Text>
       </View>
 
       <View style={styles.tabRow}>
-        {FILTERS.map(({ key, label }) => {
+        {FILTERS.map(({ key, labelKey }) => {
           const active = key === filter;
           return (
             <Pressable key={key} onPress={() => setFilter(key)} style={styles.tab}>
@@ -83,7 +86,7 @@ export default function ReportsScreen() {
                   { color: active ? theme.accent : theme.textSecondary, fontFamily: active ? FontFamily.semiBold : FontFamily.medium },
                 ]}
               >
-                {label}
+                {t(labelKey)}
               </Text>
               {active ? <View style={[styles.tabIndicator, { backgroundColor: theme.accent }]} /> : null}
             </Pressable>
@@ -103,7 +106,7 @@ export default function ReportsScreen() {
         ListFooterComponent={loadingMore ? <ActivityIndicator color={theme.accent} style={styles.footerLoader} /> : null}
         ListEmptyComponent={
           !loading ? (
-            <Text style={[styles.empty, { color: theme.textSecondary }]}>You haven&apos;t reported anything yet.</Text>
+            <Text style={[styles.empty, { color: theme.textSecondary }]}>{t('myReports.empty')}</Text>
           ) : null
         }
       />

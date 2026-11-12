@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/button';
 import { FontFamily, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
 
 export type AiScanPhase = 'scanning' | 'approved' | 'rejected';
 
@@ -16,13 +17,6 @@ type AiScanModalProps = {
   onDismiss: () => void;
 };
 
-const STEPS = [
-  'Uploading your report securely',
-  'Scanning the photo for the reported issue',
-  'Checking the description for spam & scams',
-  'Verifying the location',
-  'Final AI review',
-];
 const STEP_INTERVAL_MS = 1400;
 const PREVIEW_HEIGHT = 180;
 
@@ -33,6 +27,8 @@ const PREVIEW_HEIGHT = 180;
  */
 export function AiScanModal({ visible, phase, photoUri, message, onDismiss }: AiScanModalProps) {
   const theme = useTheme();
+  const { t, strings } = useLanguage();
+  const STEPS = strings.scan.steps;
   const [step, setStep] = useState(0);
   const [sweep] = useState(() => new Animated.Value(0));
   const [pulse] = useState(() => new Animated.Value(0));
@@ -44,7 +40,7 @@ export function AiScanModal({ visible, phase, photoUri, message, onDismiss }: Ai
       clearInterval(timer);
       setStep(0);
     };
-  }, [visible, phase]);
+  }, [visible, phase, STEPS.length]);
 
   useEffect(() => {
     if (!visible || phase !== 'scanning') return;
@@ -70,12 +66,12 @@ export function AiScanModal({ visible, phase, photoUri, message, onDismiss }: Ai
 
   const scanning = phase === 'scanning';
   const statusColor = phase === 'approved' ? theme.success : phase === 'rejected' ? theme.error : theme.accent;
-  const title = scanning ? 'AI is scanning your report' : phase === 'approved' ? 'Report approved' : 'Report not posted';
+  const title = scanning ? t('scan.scanningTitle') : phase === 'approved' ? t('scan.approvedTitle') : t('scan.rejectedTitle');
   const subtitle = scanning
-    ? 'Checking for spam, scams and unrelated photos before it goes live.'
+    ? t('scan.scanningBody')
     : phase === 'approved'
-      ? 'No spam detected. Your report is now live on the Home feed.'
-      : message ?? 'Our AI screening flagged this report.';
+      ? t('scan.approvedBody')
+      : message ?? t('scan.rejectedBody');
 
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={scanning ? () => {} : onDismiss}>
@@ -98,7 +94,7 @@ export function AiScanModal({ visible, phase, photoUri, message, onDismiss }: Ai
                 />
                 <Animated.View style={[styles.badge, { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }]}>
                   <Ionicons name="scan-outline" size={14} color="#fff" />
-                  <Text style={styles.badgeText}>AI SCAN</Text>
+                  <Text style={styles.badgeText}>{t('scan.badge')}</Text>
                 </Animated.View>
               </>
             ) : (
@@ -138,7 +134,7 @@ export function AiScanModal({ visible, phase, photoUri, message, onDismiss }: Ai
               })}
             </View>
           ) : phase === 'rejected' ? (
-            <Button title="Edit report" onPress={onDismiss} style={styles.action} />
+            <Button title={t('scan.edit')} onPress={onDismiss} style={styles.action} />
           ) : null}
         </View>
       </View>

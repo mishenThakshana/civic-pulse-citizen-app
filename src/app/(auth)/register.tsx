@@ -9,6 +9,7 @@ import { TextField } from '@/components/ui/text-field';
 import { FontFamily, Spacing } from '@/constants/theme';
 import { ApiError, useAuth } from '@/context/auth-context';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
 import {
   validateEmail,
   validateNicNumber,
@@ -44,6 +45,7 @@ export default function RegisterScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { register } = useAuth();
+  const { t } = useLanguage();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -69,22 +71,22 @@ export default function RegisterScreen() {
 
   function handleNameChange(value: string) {
     setName(value);
-    setFieldErrors((prev) => (prev.name ? { ...prev, name: validateRequired(value, 'Full name') } : prev));
+    setFieldErrors((prev) => (prev.name ? { ...prev, name: validateRequired(value, t('register.fullName'), t) } : prev));
   }
 
   function handleEmailChange(value: string) {
     setEmail(value);
-    setFieldErrors((prev) => (prev.email ? { ...prev, email: validateEmail(value) } : prev));
+    setFieldErrors((prev) => (prev.email ? { ...prev, email: validateEmail(value, t) } : prev));
   }
 
   function handlePhoneChange(value: string) {
     setPhone(value);
-    setFieldErrors((prev) => (prev.phone ? { ...prev, phone: validatePhone(value) } : prev));
+    setFieldErrors((prev) => (prev.phone ? { ...prev, phone: validatePhone(value, t) } : prev));
   }
 
   function handleNicNumberChange(value: string) {
     setNicNumber(value);
-    setFieldErrors((prev) => (prev.nicNumber ? { ...prev, nicNumber: validateNicNumber(value) } : prev));
+    setFieldErrors((prev) => (prev.nicNumber ? { ...prev, nicNumber: validateNicNumber(value, t) } : prev));
   }
 
   function handleNicPhotoFrontChange(file: NicFile | null) {
@@ -102,8 +104,8 @@ export default function RegisterScreen() {
     setFieldErrors((prev) => {
       if (!prev.password && !prev.confirmPassword) return prev;
       const next = { ...prev };
-      if (prev.password) next.password = validatePassword(value);
-      if (prev.confirmPassword) next.confirmPassword = validatePasswordConfirmation(value, confirmPassword);
+      if (prev.password) next.password = validatePassword(value, t);
+      if (prev.confirmPassword) next.confirmPassword = validatePasswordConfirmation(value, confirmPassword, t);
       return next;
     });
   }
@@ -111,20 +113,20 @@ export default function RegisterScreen() {
   function handleConfirmPasswordChange(value: string) {
     setConfirmPassword(value);
     setFieldErrors((prev) =>
-      prev.confirmPassword ? { ...prev, confirmPassword: validatePasswordConfirmation(password, value) } : prev
+      prev.confirmPassword ? { ...prev, confirmPassword: validatePasswordConfirmation(password, value, t) } : prev
     );
   }
 
   function runClientValidation(): boolean {
     const errors: FieldErrors = {
-      name: validateRequired(name, 'Full name'),
-      email: validateEmail(email),
-      phone: validatePhone(phone),
-      nicNumber: validateNicNumber(nicNumber),
-      nicPhotoFront: nicPhotoFront ? null : 'NIC front photo is required.',
-      nicPhotoBack: nicPhotoBack ? null : 'NIC back photo is required.',
-      password: validatePassword(password),
-      confirmPassword: validatePasswordConfirmation(password, confirmPassword),
+      name: validateRequired(name, t('register.fullName'), t),
+      email: validateEmail(email, t),
+      phone: validatePhone(phone, t),
+      nicNumber: validateNicNumber(nicNumber, t),
+      nicPhotoFront: nicPhotoFront ? null : t('register.nicFrontRequired'),
+      nicPhotoBack: nicPhotoBack ? null : t('register.nicBackRequired'),
+      password: validatePassword(password, t),
+      confirmPassword: validatePasswordConfirmation(password, confirmPassword, t),
     };
     setFieldErrors(errors);
     return Object.values(errors).every((message) => !message);
@@ -159,7 +161,7 @@ export default function RegisterScreen() {
         setFieldErrors((prev) => ({ ...prev, ...mapped }));
         setFormError(Object.keys(mapped).length ? null : e.firstError());
       } else {
-        setFormError(e instanceof ApiError ? e.firstError() : 'Unable to create your account. Please try again.');
+        setFormError(e instanceof ApiError ? e.firstError() : t('register.failed'));
       }
     } finally {
       setLoading(false);
@@ -175,10 +177,9 @@ export default function RegisterScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.four }]}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={[styles.title, { color: theme.text }]}>Create your account</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('register.title')}</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Registration requires a valid NIC. An administrator will review and approve your
-          account before you can sign in.
+          {t('register.subtitle')}
         </Text>
 
         <View style={styles.form}>
@@ -189,14 +190,14 @@ export default function RegisterScreen() {
           ) : null}
 
           <TextField
-            label="Full name"
+            label={t('register.fullName')}
             value={name}
             onChangeText={handleNameChange}
             placeholder="Nimal Perera"
             error={fieldErrors.name}
           />
           <TextField
-            label="Email address"
+            label={t('register.email')}
             value={email}
             onChangeText={handleEmailChange}
             placeholder="you@example.com"
@@ -206,7 +207,7 @@ export default function RegisterScreen() {
             error={fieldErrors.email}
           />
           <TextField
-            label="Phone number"
+            label={t('register.phone')}
             value={phone}
             onChangeText={handlePhoneChange}
             placeholder="07XXXXXXXX"
@@ -214,46 +215,46 @@ export default function RegisterScreen() {
             error={fieldErrors.phone}
           />
           <TextField
-            label="NIC number"
+            label={t('register.nicNumber')}
             value={nicNumber}
             onChangeText={handleNicNumberChange}
-            placeholder="e.g. 199012345678"
+            placeholder={t('register.nicNumberPlaceholder')}
             autoCapitalize="characters"
             error={fieldErrors.nicNumber}
           />
 
           <NicPhotoPicker
-            label="NIC front photo"
+            label={t('register.nicFront')}
             value={nicPhotoFront}
             onChange={handleNicPhotoFrontChange}
             error={fieldErrors.nicPhotoFront}
           />
           <NicPhotoPicker
-            label="NIC back photo"
+            label={t('register.nicBack')}
             value={nicPhotoBack}
             onChange={handleNicPhotoBackChange}
             error={fieldErrors.nicPhotoBack}
           />
 
           <TextField
-            label="Password"
+            label={t('register.password')}
             value={password}
             onChangeText={handlePasswordChange}
-            placeholder="At least 8 characters"
+            placeholder={t('register.passwordPlaceholder')}
             secureTextEntry
             error={fieldErrors.password}
           />
           <TextField
-            label="Confirm password"
+            label={t('register.confirmPassword')}
             value={confirmPassword}
             onChangeText={handleConfirmPasswordChange}
-            placeholder="Re-enter your password"
+            placeholder={t('register.confirmPasswordPlaceholder')}
             secureTextEntry
             error={fieldErrors.confirmPassword}
           />
 
           <Button
-            title="Create account"
+            title={t('register.submit')}
             onPress={handleSubmit}
             loading={loading}
             disabled={!canSubmit}
@@ -263,10 +264,10 @@ export default function RegisterScreen() {
 
         <View style={styles.footer}>
           <Text style={{ color: theme.textSecondary, fontSize: 13, fontFamily: FontFamily.regular }}>
-            Already have an account?
+            {t('register.haveAccount')}
           </Text>
           <Link href="/(auth)/login" style={{ color: theme.accent, fontFamily: FontFamily.semiBold, fontSize: 13 }}>
-            Sign in
+            {t('register.signIn')}
           </Link>
         </View>
       </ScrollView>

@@ -12,6 +12,8 @@ import { ReportPhotoPicker, type ReportPhoto } from '@/components/report-photo-p
 import { FontFamily, Spacing } from '@/constants/theme';
 import { useCurrentLocation } from '@/context/location-context';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
+import { categoryName } from '@/lib/format';
 import { ApiError, useAuth } from '@/context/auth-context';
 import { createReport, listCategories } from '@/lib/reports';
 import type { Category } from '@/types/api';
@@ -21,6 +23,7 @@ export default function NewReportScreen() {
   const insets = useSafeAreaInsets();
   const location = useCurrentLocation();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState<number | null>(null);
@@ -94,7 +97,7 @@ export default function NewReportScreen() {
         setScan({ phase: 'rejected', message: e.firstError() });
       } else {
         setScan(null);
-        setError(e instanceof ApiError ? e.firstError() : 'Unable to submit your report. Please try again.');
+        setError(e instanceof ApiError ? e.firstError() : t('newReport.failed'));
       }
     } finally {
       setSubmitting(false);
@@ -110,9 +113,9 @@ export default function NewReportScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.four }]}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={[styles.title, { color: theme.text }]}>Report an issue</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('newReport.title')}</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Takes under a minute. A photo and a quick description of where it is is enough.
+          {t('newReport.subtitle')}
         </Text>
 
         {error ? (
@@ -126,18 +129,18 @@ export default function NewReportScreen() {
             <ReportPhotoPicker value={photo} onChange={setPhoto} />
 
             <View style={styles.locationSection}>
-              <Text style={[styles.label, { color: theme.text }]}>Where is it</Text>
+              <Text style={[styles.label, { color: theme.text }]}>{t('newReport.whereIsIt')}</Text>
               <LocationChip status={location.status} city={location.city} onPress={location.refresh} />
               <TextField
-                label={location.city ? `Where in ${location.city}?` : 'Where is it, exactly?'}
+                label={location.city ? t('newReport.whereInCity', { city: location.city }) : t('newReport.whereExactly')}
                 value={address}
                 onChangeText={handleAddressChange}
-                placeholder="Street, landmark, nearest junction…"
+                placeholder={t('newReport.addressPlaceholder')}
               />
             </View>
 
             <View style={styles.categorySection}>
-              <Text style={[styles.label, { color: theme.text }]}>What kind of problem is it (optional)</Text>
+              <Text style={[styles.label, { color: theme.text }]}>{t('newReport.categoryLabel')}</Text>
               <View style={styles.chipRow}>
                 {categories.map((category) => {
                   const selected = category.id === categoryId;
@@ -153,7 +156,7 @@ export default function NewReportScreen() {
                         },
                       ]}
                     >
-                      <Text style={[styles.chipText, { color: selected ? '#fff' : theme.text }]}>{category.name}</Text>
+                      <Text style={[styles.chipText, { color: selected ? '#fff' : theme.text }]}>{categoryName(category, t)}</Text>
                     </Pressable>
                   );
                 })}
@@ -161,28 +164,28 @@ export default function NewReportScreen() {
             </View>
 
             <TextField
-              label="Describe it briefly"
+              label={t('newReport.describe')}
               value={description}
               onChangeText={setDescription}
-              placeholder="What's wrong, and why it matters…"
+              placeholder={t('newReport.describePlaceholder')}
               multiline
               numberOfLines={4}
               style={styles.descriptionInput}
             />
 
             <TextField
-              label="Contact phone"
+              label={t('newReport.contactPhone')}
               value={contactPhone}
               onChangeText={setContactPhone}
               placeholder="07XXXXXXXX"
               keyboardType="phone-pad"
             />
             <Text style={[styles.hint, { color: theme.textSecondary }]}>
-              The government may need to call you about this report.
+              {t('newReport.contactHint')}
             </Text>
 
             <Button
-              title="Send report"
+              title={t('newReport.submit')}
               onPress={handleSubmit}
               loading={submitting}
               disabled={!canSubmit}
@@ -207,14 +210,15 @@ export default function NewReportScreen() {
 
 function LocationGate({ location }: { location: ReturnType<typeof useCurrentLocation> }) {
   const theme = useTheme();
+  const { t } = useLanguage();
 
   if (location.status === 'locating') {
     return (
       <View style={[styles.gate, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <ActivityIndicator color={theme.accent} />
-        <Text style={[styles.gateTitle, { color: theme.text }]}>Finding your location…</Text>
+        <Text style={[styles.gateTitle, { color: theme.text }]}>{t('newReport.locatingTitle')}</Text>
         <Text style={[styles.gateBody, { color: theme.textSecondary }]}>
-          CivicPulse needs your GPS location to attach it to your report.
+          {t('newReport.locatingBody')}
         </Text>
       </View>
     );
@@ -224,24 +228,24 @@ function LocationGate({ location }: { location: ReturnType<typeof useCurrentLoca
     location.status === 'permission-denied'
       ? {
           icon: 'location-outline' as const,
-          title: 'Location permission needed',
-          body: 'Allow CivicPulse to access your location so we can attach it to your report.',
-          actionLabel: location.canAskAgain ? 'Allow location access' : 'Open settings',
+          title: t('newReport.permissionTitle'),
+          body: t('newReport.permissionBody'),
+          actionLabel: location.canAskAgain ? t('newReport.allowLocation') : t('newReport.openSettings'),
           onAction: location.canAskAgain ? location.refresh : () => Linking.openSettings(),
         }
       : location.status === 'services-disabled'
         ? {
             icon: 'navigate-outline' as const,
-            title: 'Turn on GPS / Location',
-            body: "Your device's Location is switched off. Turn it on so we can find where you are.",
-            actionLabel: 'Turn on location',
+            title: t('newReport.gpsOffTitle'),
+            body: t('newReport.gpsOffBody'),
+            actionLabel: t('newReport.turnOnLocation'),
             onAction: location.enableLocationServices,
           }
         : {
             icon: 'alert-circle-outline' as const,
-            title: "Couldn't get your location",
-            body: 'Something went wrong while finding your location. Check your connection and try again.',
-            actionLabel: 'Try again',
+            title: t('newReport.locationErrorTitle'),
+            body: t('newReport.locationErrorBody'),
+            actionLabel: t('common.tryAgain'),
             onAction: location.refresh,
           };
 

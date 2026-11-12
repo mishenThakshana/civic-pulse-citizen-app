@@ -10,6 +10,7 @@ import { FontFamily, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import { useCurrentLocation } from '@/context/location-context';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
 import { listReports, removeUpvote, upvote } from '@/lib/reports';
 import type { Report } from '@/types/api';
 
@@ -20,6 +21,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const location = useCurrentLocation();
+  const { t, language } = useLanguage();
 
   const [sort, setSort] = useState<Sort>('newest');
   const [reports, setReports] = useState<Report[]>([]);
@@ -49,7 +51,9 @@ export default function HomeScreen() {
     useCallback(() => {
       setLoading(true);
       loadPage(sort, 1, 'replace').finally(() => setLoading(false));
-    }, [sort, loadPage])
+      // Reload when the language changes so system notes come back translated.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sort, loadPage, language])
   );
 
   async function handleRefresh() {
@@ -85,10 +89,10 @@ export default function HomeScreen() {
     <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.three }]}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: theme.text }]}>Issues near you</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{t('home.title')}</Text>
           <LocationChip status={location.status} city={location.city} onPress={location.refresh} />
         </View>
-        {user ? <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Signed in as {user.name}</Text> : null}
+        {user ? <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{t('home.signedInAs', { name: user.name })}</Text> : null}
       </View>
 
       <View style={styles.tabRow}>
@@ -102,7 +106,7 @@ export default function HomeScreen() {
                   { color: active ? theme.accent : theme.textSecondary, fontFamily: active ? FontFamily.semiBold : FontFamily.medium },
                 ]}
               >
-                {option === 'newest' ? 'Newest' : 'Most voted'}
+                {option === 'newest' ? t('home.newest') : t('home.mostVoted')}
               </Text>
               {active ? <View style={[styles.tabIndicator, { backgroundColor: theme.accent }]} /> : null}
             </Pressable>
@@ -130,7 +134,7 @@ export default function HomeScreen() {
         ListEmptyComponent={
           !loading ? (
             <Text style={[styles.empty, { color: theme.textSecondary }]}>
-              No reports yet. Be the first to report an issue nearby.
+              {t('home.empty')}
             </Text>
           ) : null
         }

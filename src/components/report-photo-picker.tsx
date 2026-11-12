@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { FontFamily, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/context/language-context';
 import { compressImage } from '@/lib/image';
 
 export type ReportPhoto = {
@@ -33,11 +34,12 @@ type ReportPhotoPickerProps = {
  */
 export function ReportPhotoPicker({ value, onChange, error }: ReportPhotoPickerProps) {
   const theme = useTheme();
+  const { t } = useLanguage();
 
   async function handleTakePhoto() {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Camera access needed', 'CivicPulse needs camera access to photograph the problem.');
+      Alert.alert(t('newReport.cameraNeededTitle'), t('newReport.cameraNeededBody'));
       return;
     }
 
@@ -52,14 +54,14 @@ export function ReportPhotoPicker({ value, onChange, error }: ReportPhotoPickerP
         const localUri = await copyToLocalCache(compressed.uri, filename);
         onChange({ uri: localUri, name: filename, mimeType: 'image/jpeg' });
       } catch {
-        Alert.alert('Unable to use this photo', 'Please try taking the photo again.');
+        Alert.alert(t('newReport.unusablePhotoTitle'), t('newReport.unusablePhotoBody'));
       }
     }
   }
 
   return (
     <View>
-      <Text style={[styles.label, { color: theme.text }]}>Photo of the problem</Text>
+      <Text style={[styles.label, { color: theme.text }]}>{t('newReport.photoLabel')}</Text>
       {value ? (
         <View>
           <Image source={{ uri: value.uri }} style={styles.preview} />
@@ -76,7 +78,7 @@ export function ReportPhotoPicker({ value, onChange, error }: ReportPhotoPickerP
           ]}
         >
           <Ionicons name="camera-outline" size={22} color={theme.accent} />
-          <Text style={[styles.uploadText, { color: theme.text }]}>Take a photo</Text>
+          <Text style={[styles.uploadText, { color: theme.text }]}>{t('newReport.takePhoto')}</Text>
         </Pressable>
       )}
       {error ? <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text> : null}

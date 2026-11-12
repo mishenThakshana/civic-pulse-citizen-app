@@ -12,6 +12,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 
 import { AuthProvider } from '@/context/auth-context';
+import { LanguageProvider } from '@/context/language-context';
 import { Colors } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -34,6 +35,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <LanguageProvider>
       <AuthProvider>
         <ThemeProvider value={DefaultTheme}>
           <StatusBar style="dark" />
@@ -52,6 +54,7 @@ export default function RootLayout() {
           </Stack>
         </ThemeProvider>
       </AuthProvider>
+      </LanguageProvider>
     </GestureHandlerRootView>
   );
 }

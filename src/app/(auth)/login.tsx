@@ -4,10 +4,12 @@ import { Link } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { FontFamily, Spacing } from '@/constants/theme';
 import { ApiError, useAuth } from '@/context/auth-context';
+import { useLanguage } from '@/context/language-context';
 import { useTheme } from '@/hooks/use-theme';
 import { validateEmail, validateRequired } from '@/lib/validation';
 
@@ -15,6 +17,7 @@ export default function LoginScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,19 +30,19 @@ export default function LoginScreen() {
 
   function handleEmailChange(value: string) {
     setEmail(value);
-    setEmailError((prev) => (prev ? validateEmail(value) : prev));
+    setEmailError((prev) => (prev ? validateEmail(value, t) : prev));
   }
 
   function handlePasswordChange(value: string) {
     setPassword(value);
-    setPasswordError((prev) => (prev ? validateRequired(value, 'Password') : prev));
+    setPasswordError((prev) => (prev ? validateRequired(value, t('login.password'), t) : prev));
   }
 
   async function handleSubmit() {
     setError(null);
 
-    const nextEmailError = validateEmail(email);
-    const nextPasswordError = validateRequired(password, 'Password');
+    const nextEmailError = validateEmail(email, t);
+    const nextPasswordError = validateRequired(password, t('login.password'), t);
     setEmailError(nextEmailError);
     setPasswordError(nextPasswordError);
     if (nextEmailError || nextPasswordError) return;
@@ -48,7 +51,7 @@ export default function LoginScreen() {
     try {
       await login(email.trim(), password);
     } catch (e) {
-      setError(e instanceof ApiError ? e.firstError() : 'Unable to sign in. Please try again.');
+      setError(e instanceof ApiError ? e.firstError() : t('login.failed'));
     } finally {
       setLoading(false);
     }
@@ -63,13 +66,17 @@ export default function LoginScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.six }]}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={styles.languageRow}>
+          <LanguageSwitcher />
+        </View>
+
         <View style={[styles.logoBadge, { backgroundColor: theme.accent }]}>
           <Ionicons name="pulse" size={32} color="#fff" />
         </View>
 
         <Text style={[styles.title, { color: theme.text }]}>CivicPulse</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Report local issues. Track what happens next.
+          {t('login.tagline')}
         </Text>
 
         <View style={styles.form}>
@@ -80,7 +87,7 @@ export default function LoginScreen() {
           ) : null}
 
           <TextField
-            label="Email address"
+            label={t('login.email')}
             value={email}
             onChangeText={handleEmailChange}
             placeholder="you@example.com"
@@ -90,7 +97,7 @@ export default function LoginScreen() {
             error={emailError}
           />
           <TextField
-            label="Password"
+            label={t('login.password')}
             value={password}
             onChangeText={handlePasswordChange}
             placeholder="••••••••"
@@ -100,7 +107,7 @@ export default function LoginScreen() {
           />
 
           <Button
-            title="Sign in"
+            title={t('login.submit')}
             onPress={handleSubmit}
             loading={loading}
             disabled={!canSubmit}
@@ -110,13 +117,13 @@ export default function LoginScreen() {
 
         <View style={styles.footer}>
           <Text style={{ color: theme.textSecondary, fontSize: 13, fontFamily: FontFamily.regular }}>
-            Don&apos;t have an account?
+            {t('login.noAccount')}
           </Text>
           <Link
             href="/(auth)/register"
             style={{ color: theme.accent, fontFamily: FontFamily.semiBold, fontSize: 13 }}
           >
-            Create one
+            {t('login.createOne')}
           </Link>
         </View>
       </ScrollView>
@@ -132,6 +139,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.six,
     alignItems: 'center',
   },
+  languageRow: { alignSelf: 'stretch', alignItems: 'center', marginBottom: Spacing.five },
   logoBadge: {
     width: 56,
     height: 56,
